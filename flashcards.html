@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>英語フラッシュカード 350</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+    background: #1a1a2e;
+    color: #eee;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    padding: 20px;
+  }
+
+  h1 {
+    font-size: 1.2rem;
+    color: #a0aec0;
+    letter-spacing: 0.05em;
+  }
+
+  .progress-bar-wrap {
+    width: 100%;
+    max-width: 480px;
+    background: #2d3748;
+    border-radius: 99px;
+    height: 6px;
+  }
+  .progress-bar {
+    height: 6px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    border-radius: 99px;
+    transition: width 0.3s ease;
+  }
+
+  .counter {
+    font-size: 0.95rem;
+    color: #718096;
+  }
+
+  /* --- Card --- */
+  .scene {
+    width: 100%;
+    max-width: 480px;
+    height: 260px;
+    perspective: 1000px;
+    cursor: pointer;
+  }
+
+  .card {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 20px;
+  }
+
+  .card.flipped {
+    transform: rotateY(180deg);
+  }
+
+  .face {
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    gap: 12px;
+  }
+
+  .face-front {
+    background: linear-gradient(135deg, #232946 0%, #16213e 100%);
+    border: 1px solid #3d4a6b;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  }
+
+  .face-back {
+    background: linear-gradient(135deg, #0f3460 0%, #162447 100%);
+    border: 1px solid #2a4a7f;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    transform: rotateY(180deg);
+  }
+
+  .face-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    opacity: 0.45;
+  }
+
+  .face-text {
+    font-size: 1.55rem;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.5;
+    color: #f0f4ff;
+  }
+
+  .face-back .face-text {
+    font-size: 1.35rem;
+    color: #93c5fd;
+    font-weight: 500;
+    font-family: 'Georgia', serif;
+    font-style: italic;
+  }
+
+  .tap-hint {
+    font-size: 0.75rem;
+    opacity: 0.3;
+    margin-top: 4px;
+  }
+
+  /* --- Controls --- */
+  .controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .btn-prev, .btn-next {
+    background: #2d3748;
+    color: #e2e8f0;
+    min-width: 100px;
+  }
+  .btn-prev:hover, .btn-next:hover {
+    background: #4a5568;
+    transform: translateY(-1px);
+  }
+  .btn-prev:disabled, .btn-next:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-shuffle {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+  }
+  .btn-shuffle:hover {
+    opacity: 0.88;
+    transform: translateY(-1px);
+  }
+
+  .btn-reset {
+    background: #2d3748;
+    color: #a0aec0;
+    font-size: 0.85rem;
+  }
+  .btn-reset:hover {
+    background: #4a5568;
+  }
+
+  .card-num {
+    font-size: 0.8rem;
+    color: #553c9a;
+    font-weight: 700;
+    position: absolute;
+    top: 16px;
+    left: 20px;
+  }
+
+  .btn-speak {
+    background: none;
+    border: 1.5px solid rgba(147, 197, 253, 0.35);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    min-width: unset;
+    padding: 0;
+    font-size: 1.1rem;
+    color: #93c5fd;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, transform 0.1s;
+    margin-top: 6px;
+  }
+  .btn-speak:hover { background: rgba(147,197,253,0.12); transform: scale(1.1); }
+  .btn-speak.speaking { background: rgba(147,197,253,0.2); animation: pulse 0.8s infinite; }
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.15)} }
+
+  @media (max-width: 540px) {
+    .scene { height: 230px; }
+    .face-text { font-size: 1.25rem; }
+  }
+</style>
+</head>
+<body>
+
+<h1>英語フラッシュカード 350</h1>
+
+<div class="progress-bar-wrap">
+  <div class="progress-bar" id="progressBar"></div>
+</div>
+
+<div class="counter" id="counter">1 / 354</div>
+
+<div class="scene" onclick="flipCard()">
+  <div class="card" id="card">
+    <div class="face face-front">
+      <div class="card-num" id="cardNum">#1</div>
+      <div class="face-label">日本語</div>
+      <div class="face-text" id="frontText"></div>
+      <div class="tap-hint">タップして答えを見る</div>
+    </div>
+    <div class="face face-back">
+      <div class="face-label">English</div>
+      <div class="face-text" id="backText"></div>
+      <button class="btn-speak" id="btnSpeak" onclick="event.stopPropagation(); speakCurrent()">🔊</button>
+    </div>
+  </div>
+</div>
+
+<div class="controls">
+  <button class="btn-prev" id="btnPrev" onclick="prev()">← 前へ</button>
+  <button class="btn-next" id="btnNext" onclick="next()">次へ →</button>
+</div>
+<div class="controls">
+  <button class="btn-shuffle" onclick="shuffle()">シャッフル</button>
+  <button class="btn-reset" onclick="reset()">順番に戻す</button>
+</div>
+
+<script>
+const raw = [
+  ["さぁ、始めましょう","Let's get started"],
+  ["一緒に行きましょう","Let's get together"],
+  ["うん、賛成","Yeah I agree"],
+  ["あなたにできるの？","Can you do it?"],
+  ["初耳だね","That's news to me"],
+  ["私を占って","Please tell me my fortune"],
+  ["何があったの？","What happened"],
+  ["それは残念だね","That's a pity"],
+  ["いい考えだね","That's an idea"],
+  ["それはおかしいね","That's funny"],
+  ["大丈夫よ","That's OK"],
+  ["もう充分うんざり","That's enough"],
+  ["いつそれをなくしたの？","When did you lose it"],
+  ["警察に届けたらいいんじゃない","Why don't you report it to the police"],
+  ["そうだといいんだけど","I hope so"],
+  ["午後は暇だよ","I'm free in the afternoon"],
+  ["いいねぇ","That sounds great"],
+  ["私も行ってもいい","Can I come too?"],
+  ["これもらっていい","Can I keep this?"],
+  ["ちょっと言っていい","Can I say something"],
+  ["お願いがあるんだけど","Can I ask you a favor"],
+  ["傘を借りてもいい","Can I borrow your umbrella"],
+  ["時間によるね","Depends on the time"],
+  ["持ち帰りでお願いします","To go please"],
+  ["チーズバーガーをください","I'd like a cheeseburger"],
+  ["パーマをかけて下さい","I'd like a perm"],
+  ["ワインを一杯ください","I'd like a glass of wine please?"],
+  ["このクーポン使えますか？","Can I use this coupon"],
+  ["もう一度言ってもらえますか？","Would you say that again"],
+  ["手伝ってもらえますか？","Would you help me"],
+  ["もう少し大きな声で言ってもらえますか","Would you speak up"],
+  ["ドアを開けてもらえますか？","Could you open the door please"],
+  ["そうしてください","Would you please"],
+  ["ちょっと高いんじゃない","Isn't that a little expensive"],
+  ["ご親切にありがとう","That's very kind of you"],
+  ["心配しなくていいよ","Don't worry"],
+  ["大丈夫きっとあなたは合格するわ","I'm sure you'll pass"],
+  ["彼はきっと助けてくれるよ","I'm sure he'll help"],
+  ["あなたが気に入ってくれるといいんだけど","I'm sure you like it"],
+  ["大丈夫うまくいくわ","I'm sure things will work out"],
+  ["追試があるよ","There's going to be a make up test"],
+  ["昇進おめでとう","Congratulations on your promotion"],
+  ["あなたのボーイフレンドから聞いたよ","I heard it from your boyfriend"],
+  ["新しい上司はどう？","What's your new boss like"],
+  ["よかったね","Good for you"],
+  ["どうして遅れたの？","How come you are late"],
+  ["なんで彼が来てるの？","How come he's here"],
+  ["どうして空は青いの？","How come the sky is blue"],
+  ["どうして彼女は電話をくれないの？","How come she never called me"],
+  ["怒ってないよ","I'm not mad"],
+  ["いいねぇさぁ行こう","Sounds good let's go"],
+  ["寒いのは無理もないよ","No wonder you are cold"],
+  ["疲れるのは無理もないよ","No wonder you are tired"],
+  ["眠いのは無理ないよ","No wonder you are sleepy"],
+  ["もう少し洋服を着ればいいんじゃない","Why don't you wear more clothes"],
+  ["まだ真冬だよ","It's still in the middle of winter"],
+  ["そうじゃないかと思った","I thought so"],
+  ["乗せてくれてありがとう","Thanks for the ride"],
+  ["今日のキャンプがとっても楽しみだわ","I am looking forward to today's camping"],
+  ["夜にはキャンプファイヤーするの","Are we having a campfire at night"],
+  ["もし雨が降ったらどうしようよう","What if it rains"],
+  ["もし誰も来なかったらどうしよう","What if nobody come"],
+  ["もし失敗したらどうしよ？","What if I fail"],
+  ["パスワード忘れちゃったらどうしよう","What if I forget my password"],
+  ["彼女に彼氏がいたらどうしよう","What if she has a boyfriend"],
+  ["雨が降らないといいなぁ","I hope it won't rain"],
+  ["私に修理させて","Let me fix it"],
+  ["ちょっと見させて","Let me take a look at it"],
+  ["お手伝いさせてください","Let me help you"],
+  ["キャッシーを紹介させて","Let me introduce Kathy"],
+  ["説明させて","Let me explain"],
+  ["最後まで話させて","Let me finish"],
+  ["以前配管工だったんだ","I was once a plumber"],
+  ["くたくただったから、そのまま寝た。","I was exhausted and just went to bed"],
+  ["映画どうだった？","How was the movie"],
+  ["旅行はどうだった？","How was your trip"],
+  ["どんな感じだった？","How was it"],
+  ["それどうだった","What did you like about it"],
+  ["私もいつかそれを見ます","I'll watch it too someday"],
+  ["来週には返してね","Give it back to me next week"],
+  ["もう行く時間だよ","You have to go now"],
+  ["来てくれてありがと","Thanks for coming"],
+  ["手伝ってくれてありがとう","Thanks for your help"],
+  ["いろいろありがとう","Thanks for everything"],
+  ["そうだと思うよ","I think it true"],
+  ["あなたが正しいと思います","I think you are right"],
+  ["彼女は来ると思います","I think she'll come"],
+  ["風邪をひいたと思います","I think I've caught a cold"],
+  ["鍵をなくしちゃったと思います","I think I've lost my keys"],
+  ["ずっと前から彼を知っています","I've known him for a long time"],
+  ["彼は大げさに言うようなタイプの人じゃないよ","He's not the type to exaggerate things"],
+  ["彼にもう一回尋ねてみます","I will ask him once again"],
+  ["大体みんな私は父親似だといいます","Usually people say I look like my father"],
+  ["これが私の家族の写真です","Here's a picture of my family"],
+  ["それはあなたへの誕生日プレゼントです","He is a birthday present for you"],
+  ["これ、あなたに","Here's a little something for you"],
+  ["これが私の電話番号です","Here's my phone number"],
+  ["冗談でしょう","Are you kidding"],
+  ["それを聞いたら、彼女はきっと喜ぶわ","She will be happy to hear that"],
+  ["先に使っていいよ","You can use it first"],
+  ["休憩しない","How about a break"],
+  ["いっぱいどう？","How about a drink"],
+  ["ケーキはいかが？","How about some cake"],
+  ["疲れてきた","I'm getting tired"],
+  ["今日中に終わらせられると思います","I think I can finish it by today"],
+  ["あなたに案内してほしいんだけど","I'd like you to show me around"],
+  ["手伝って欲しいんだけど","I'd like you to help me"],
+  ["ここにいて欲しいんだけど","I'd like you to stay here"],
+  ["海が見えるところを教えてください","Tell me where you can see the Sea"],
+  ["Hey元気？","Hey how are you doing"],
+  ["ハワイに住むってどんな感じ？","What's it like living in Hawaii"],
+  ["新しい彼氏はどんな感じ？","What's your new boyfriend like"],
+  ["それを聞いて嬉しいわ","It's nice to hear that"],
+  ["そっちの天気ってどんな感じ？","What's the weather like there"],
+  ["ドアに鍵がかかってるか確認して","Make sure the door is locked"],
+  ["携帯電話がオフになってるか確認してください","Make sure your cell phone is off"],
+  ["シートベルトを閉めているか確認してください","Make sure your seatbelt is on"],
+  ["どうしたの？","What's the matter"],
+  ["ごめんなさい。まだなの","Sorry not yet"],
+  ["どうやって写真を添付するの？","How do I attach a photo"],
+  ["これをどうやって食べればいいの？","How do you eat this"],
+  ["空港へはどうやって行けばいいの","How do you get to the airport"],
+  ["そこにはどうやって行けばいいの？","How do you get there"],
+  ["どう説明すればいいかなぁ？","How do I explain"],
+  ["はい、そうします","I will do that"],
+  ["間違いなく今日中にそれを送ります","I will send it by the end of the day for sure"],
+  ["うん、まぁね","Yeah kind of"],
+  ["彼は体調が悪いです","I'm afraid he doesn't feel good"],
+  ["すいません。できません。","I'm afraid I can't"],
+  ["ごめんなさい。今ちょっと忙しいの","I'm afraid I'm busy right now"],
+  ["どうやら彼は風邪をひいたらしい","Seems like he caught a cold"],
+  ["彼がいなくて寂しい","Do you miss him"],
+  ["顔に書いてあるよ","It's written all over your face"],
+  ["ビールをもう1杯いかが？","Would you like another beer"],
+  ["1口いかが？","Would you like a bite"],
+  ["何か他にいる？","Would you like anything else"],
+  ["もうちょっと遅らせてもらえる？","Can you make it a little later"],
+  ["こんなに遅くお電話してごめんなさい","I'm sorry to call you so late"],
+  ["ご迷惑おかけします","I'm sorry to trouble you"],
+  ["お待たせしてすみません","I'm sorry to keep you waiting"],
+  ["邪魔をしてすいません","I'm sorry to interrupt"],
+  ["がっかりさせてごめんなさい","I'm sorry to disappoint you"],
+  ["出かける時間です","It's time to go out"],
+  ["おしゃべりを止める時間よ","It's time to stop talking"],
+  ["次の休憩所で休みましょう","Let's take a break at the next rest area"],
+  ["月曜日に資格のテストがあるんじゃないの？","Don't you have a qualification test on Monday"],
+  ["テストの準備はできたの","Are you ready for the test"],
+  ["旅行の準備はできたの","Are you ready for the trip"],
+  ["ほんとに？","Are you sure"],
+  ["私だったら勉強するわ","If it was me I would study"],
+  ["失敗しても、私のせいにしないでよ","Don't blame me if you flank the test"],
+  ["なんだって","What is it?"],
+  ["ほんとに","For real?"],
+  ["あんまりいい考えじゃないねぇ","I don't think that's a good idea"],
+  ["きっと忙しくなるよ","You'll sure be busy"],
+  ["私って料理できない人に見える","Do I look like a person who can't cook"],
+  ["気に入ってくれるといいんだけど","I hope you like it"],
+  ["大丈夫きっとうまくいくよ","I hope everything will be OK"],
+  ["お力になれるといいんですが","I hope I can be helpful"],
+  ["気にしないで","Never mind"],
+  ["もう帰るの","Are you leaving now"],
+  ["ご家族によろしく","Say hello to your family"],
+  ["彼がそんなこと言ったなんて、信じられない","I can't believe he said that"],
+  ["全然","Not at all"],
+  ["またご馳走してね","Please cook for me again"],
+  ["すごく楽しかった","It was really exciting"],
+  ["だからみんな彼のことが好きなんだよ","That's why everybody likes him"],
+  ["そんなもんだよ","That's the way it goes"],
+  ["もしもし、ABCのブラウンと申します","Hello this is Mr. Brown from ABC company"],
+  ["明日は晴れるよね","Tomorrow's going to be sunny right"],
+  ["私は都合いいよ","That's fine with me"],
+  ["彼は自分でできるのかな？","I wonder if he can do it himself"],
+  ["彼は来るかなぁ","I wonder if he will come"],
+  ["今日雨降るかなぁ","I wonder if it will rain today"],
+  ["第2営業部から異動になりました","I was transferred from the second sales division"],
+  ["あなたとご一緒できてうれしいです","I'm glad to be with you"],
+  ["お越しいただいてうれしいです","I am glad to have you here"],
+  ["お力になれたら嬉しいです","I'm glad to be of help"],
+  ["お任せください","Leave it to me"],
+  ["私が子供だって言ってんの？","Are you saying I'm a kid"],
+  ["私が間違ってるって言ってんの？","Are you saying I'm wrong"],
+  ["私が嘘つきだって言ってんの","Are you saying I'm a liar"],
+  ["いい考えだね","Sounds like a plan"],
+  ["タバコやめたほうがいいよ","You should stop smoking"],
+  ["タバコを止める良い機会なんじゃない？","Isn't this a good opportunity to stop smoking"],
+  ["仕事には慣れた","Did you get used to the job"],
+  ["遠慮なく質問してね","Feel free to ask questions"],
+  ["いつでも電話してね","Feel free to call anytime"],
+  ["いつでもお立ち寄り下さい","Feel free to drop in anytime"],
+  ["いつでも連絡してね","Feel free to contact me"],
+  ["頑張ってください","Give it your best shot"],
+  ["残念ながら今じゃないです","Unfortunately not now"],
+  ["彼女をデートに誘ってみたら？","Why don't you ask her out"],
+  ["慎重だな〜","You are so cautious"],
+  ["詳しい事は知らないの","I don't know for sure"],
+  ["座ってもいいですか？","Do you mind if I sit here"],
+  ["ご一緒してもいいですか？","Do you mind if I join you"],
+  ["結構です、遠慮しておきます","No thank you I'd rather not"],
+  ["私の髪型どう？","How do you like my hair"],
+  ["日本はいかがですか？","How do you like Japan"],
+  ["ここに住むのはどうですか？","How do you like living here"],
+  ["何になってるつもりなの？（仮装とか）","Where are you supposed to be"],
+  ["そうしてもらえるとうれしい","I'd love to"],
+  ["パーティー楽しんでますか？","Are you enjoying the party"],
+  ["踊りませんか？","Would you like to dance"],
+  ["足元気をつけ","Watch your step"],
+  ["階段が急だから","The stairs are steep"],
+  ["太った？","Did you gain weight"],
+  ["気持ちわかるわ","I know how you feel"],
+  ["奥さん元気","How is your wife"],
+  ["仕事はどう？","How is business"],
+  ["彼女によろしく","Say hi to her for me"],
+  ["まじで？","Are you serious"],
+  ["大丈夫？","Are you OK"],
+  ["怖くないの？","Aren't you scared"],
+  ["気が進まないなぁ","I don't feel like it"],
+  ["またの機会に","Maybe some other time"],
+  ["試合が中止になって残念","It's a shame the game was canceled"],
+  ["彼がいないのが残念だね","It's a shame he isn't here"],
+  ["自転車を借りてもいいかな？","It's OK if I borrow your bike"],
+  ["中に入ってもいい","It's OK if I come in"],
+  ["そうだろうと思う","I guess so"],
+  ["ピザを注文しない？","Why don't we order a pizza"],
+  ["ちょっと休憩しない","Why don't we take a break"],
+  ["外食しない","Why don't we eat out"],
+  ["ちょっと近くに来たもんだから","I was just nearby"],
+  ["一言ご挨拶がしたかったの","I just wanted to say hi"],
+  ["ちょっと声が聞きたかったの","I just wanted to hear your voice"],
+  ["こんなところにいたんだ","There they are"],
+  ["大丈夫よ","That's OK"],
+  ["残念だね","That's a pity"],
+  ["おかしいね","That's funny"],
+  ["そんなに飲んでません","I didn't drink that much"],
+  ["気楽にね","Take it easy"],
+  ["賛成じゃないの","Don't you agree"],
+  ["せかさないで","Don't rush me"],
+  ["そんなには…","Not really"],
+  ["素晴らしい","Excellent"],
+  ["こんな素晴らしい景色初めて見たよ","I've never seen such a beautiful view"],
+  ["写真撮っていただけませんか？","Would you mind taking our picture"],
+  ["席を代わっていただけませんか？","Would you mind changing the seats"],
+  ["後でかけ直してもらえませんか？","Would you mind calling back later?"],
+  ["最高の思い出になると思うよ","It will be one of our best memories"],
+  ["もう一度練習を始めようと思ってるんだ","I'm planning to start playing it again"],
+  ["以前はよくピアノを弾いてたんだ","I used to play the piano"],
+  ["私の新しい髪型どうかしら？","What do you think of my new haircut"],
+  ["ありえない","No way"],
+  ["早起きには慣れている","I'm used to getting up early"],
+  ["辛い料理には慣れている","I'm used to spicy food"],
+  ["了解","All right"],
+  ["そうすれば、たくさん観光できるよね","That way we can do a lot of sightseeing"],
+  ["ちょっと言ってもいい","Can I say something"],
+  ["今日のランチはなんですか？","What's for lunch today"],
+  ["はいではそれをいただきます","OK I'll have that"],
+  ["ご親切にどうもありがとう","Oh thanks that's very kind of you"],
+  ["火がつけられないの","I can't start the fire"],
+  ["ちょっと待って","Hold on"],
+  ["ほんとそうよね","I'm telling you"],
+  ["うん、それは残念","That's too bad"],
+  ["サーフィンした事ある？","Have you ever tried surfing"],
+  ["彼のこと聞いたことある","Have you ever heard of him"],
+  ["アイスクリームが食べたい","I feel like some ice cream"],
+  ["1杯飲みたいなぁ","I feel like a drink"],
+  ["酔ってしまいたい気分だ","I feel like getting drunk"],
+  ["仕事に問題を抱えてます","I'm having a trouble with my job"],
+  ["健康上の問題があります","I'm having a trouble with my health"],
+  ["様子を見ます","I wait and see"],
+  ["最近疲れてるみたいだね","You seem to be tired these days"],
+  ["乗せてってあげましょうか？","Do you want me to give you a ride"],
+  ["ついでに何か買ってこようか？","Do you want me to pick up something"],
+  ["引っ越そうかなぁと思ってる","I'm thinking of moving out"],
+  ["あなたのことを考えています","I am thinking of you"],
+  ["新しい車を買おうかと思ってるんだ","I'm thinking of buying a new car"],
+  ["できるなら、来月に","If possible next month"],
+  ["そうできるといいんだけど","That would be great"],
+  ["バイバイ連絡してね","Goodbye keep in touch"],
+  ["どうなってんの？","What's going on"],
+  ["昼間にやったらどう？","Why not do it during the daytime"],
+  ["初めてお目にかかります","I don't think we've met"],
+  ["私の名刺です","Here's my business card"],
+  ["ほんとにその通り","You can say that again"],
+  ["もちろん、、だけど、早くしてね","Sure but make it fast"],
+  ["どこに病院があるか知ってますよ","I know where the hospital is"],
+  ["2番目の信号で右に行ったら病院が見えますよ","Go right at the second light and you'll find the hospital"],
+  ["東京に行くのが待ち切れないわ","I can't wait to go to Tokyo"],
+  ["休暇が待ち切れないわ","I can't wait to go on vacation"],
+  ["まじで","Seriously"],
+  ["きっとできるよ","You'll make it"],
+  ["この旅行で何が楽しみなの？","What are you looking forward to in this trip"],
+  ["どんな料理が好き？","What kind of food would you prefer"],
+  ["キングという名前のレストランがオススメです","I recommend a restaurant called King"],
+  ["明日空いてるかどうかわからない","I'm not sure if it open tomorrow"],
+  ["それは残念","What a shame"],
+  ["試してみたい？","Do you want to try it"],
+  ["中にタコが入ってるんだよ","There's octopus in it"],
+  ["背が高かったらよかったんだけど","I wish I were taller"],
+  ["パリに行けたらよかったんだけど","I wish I could go to Paris"],
+  ["彼が助けてくれるといいんだけど","I wish he would help"],
+  ["うん、それでも大丈夫","I can live with that"],
+  ["まだ準備できてないの","Aren't you ready yet"],
+  ["信じて","Take my word for it"],
+  ["まだ着替えてないの","Aren't you dressed yet"],
+  ["もちろん","Certainly"],
+  ["正しくその通り","Exactly"],
+  ["飲み物持っていきましょうか？","Shall I bring drinks"],
+  ["乗せていきましょうか？","Should I give you a ride"],
+  ["日本には仕事でそれともレジャーで？","Are you here in Japan for business or pleasure"],
+  ["楽しんでくださいね","Hope you'll enjoy it"],
+  ["帰らないと","It's time to say goodbye"],
+  ["休憩の時間だよ","It's time to take a break"],
+  ["出かける時間だよ","It's time to go now"],
+  ["Facebookやってる","Are you on Facebook"],
+  ["友達リクエストを送ってもいい？","May I send you a friend request"],
+  ["おめでとう","Oh congratulations"],
+  ["浮かない顔ね","You don't look that happy"],
+  ["どうかしたの？","What's wrong"],
+  ["きっとうまくいくよ","Things will turn out OK"],
+  ["そろそろ帰ったほうが良さそう","Yeah but I'd better be going"],
+  ["もっと居たかったんだけど","I'd like to stay longer"],
+  ["ちょっとお伺いしたいんですが","I'd like to ask you a question"],
+  ["お話しできてよかったです","Nice talking to you"],
+  ["そう聞きました","That's what I heard"],
+  ["そう言いたかったの","That's what I meant"],
+  ["それが必要なの","That's what I need"],
+  ["大丈夫気にしてませんから","It's OK no offense taken"],
+  ["ごめんなさい。悪気は無いの","Sorry no offense meant"],
+  ["もちろん！ご一緒させて","Certainly please take me with you"],
+  ["きっと大丈夫","I'm sure it will be OK"],
+  ["まだ名前決めてないの","Did you decide on a name yet"],
+  ["よく考えて","Think hard"],
+  ["あっという間ね","How time flies"],
+  ["まだ早いよー（夜は）","The night is still young"],
+  ["今夜は、お開きにしよう","Let's call it a night"],
+  ["うん、仕方ないね","Well I can't help it"],
+  ["お会いできてうれしいです","I'm glad to see you"],
+  ["知り合いになれて、うれしいです","I'm glad to know you"],
+  ["ロサンゼルスはきっととても良い場所ですよ","I believe Los Angeles is also a beautiful place"],
+  ["来てくださって嬉しいです","I'm glad to have you here"],
+  ["私もです","So am I"],
+  ["コーヒーはいかが？","Would you like some coffee"],
+  ["紅茶のほうがいいです","I'd rather have tea"],
+  ["くつろいでね","Be my guest"],
+  ["1回やってみたことあるよ","I have tried once"],
+  ["ちょっと緊張してる","I'm a bit nervous"],
+  ["安心した","That's a relief"],
+  ["オッケー。じゃあ行こう。","OK then let's go"],
+  ["すごく勉強になるね","You can learn a lot"],
+  ["私も外国に行った時はそうします","I want to do the same when I go abroad"],
+  ["今日はちょっと手持ちが少ないんだ","I'm a little short on cash today"],
+  ["次は私のおごりね","Let me treat you next time"],
+  ["可愛い子犬ね","That's such a cute puppy"],
+  ["撫でてもいいですか？","Can I pet it"],
+  ["もっと早く家を出ればよかった","I should've left the house earlier"],
+  ["だから私先生になったんです","That's why I became a teacher"],
+];
+
+let order = raw.map((_, i) => i);
+let current = 0;
+let flipped = false;
+
+const card = document.getElementById('card');
+const frontText = document.getElementById('frontText');
+const backText = document.getElementById('backText');
+const cardNum = document.getElementById('cardNum');
+const counter = document.getElementById('counter');
+const progressBar = document.getElementById('progressBar');
+const btnPrev = document.getElementById('btnPrev');
+const btnNext = document.getElementById('btnNext');
+
+function render() {
+  const idx = order[current];
+  frontText.textContent = raw[idx][0];
+  backText.textContent = raw[idx][1];
+  cardNum.textContent = '#' + (idx + 1);
+  counter.textContent = (current + 1) + ' / ' + order.length;
+  progressBar.style.width = ((current + 1) / order.length * 100) + '%';
+  btnPrev.disabled = current === 0;
+  btnNext.disabled = current === order.length - 1;
+
+  // unflip
+  if (flipped) {
+    card.classList.remove('flipped');
+    flipped = false;
+  }
+}
+
+// --- Speech ---
+const synth = window.speechSynthesis;
+let voices = [];
+const btnSpeak = document.getElementById('btnSpeak');
+
+function loadVoices() {
+  voices = synth.getVoices();
+}
+loadVoices();
+if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = loadVoices;
+
+function speakCurrent() {
+  if (!synth) return;
+  synth.cancel();
+  const idx = order[current];
+  const text = raw[idx][1];
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'en-US';
+  utter.rate = 0.9;
+  const enVoice = voices.find(v => v.lang.startsWith('en') && !v.name.includes('Google') || v.lang === 'en-US');
+  if (enVoice) utter.voice = enVoice;
+  btnSpeak.classList.add('speaking');
+  utter.onend = () => btnSpeak.classList.remove('speaking');
+  utter.onerror = () => btnSpeak.classList.remove('speaking');
+  synth.speak(utter);
+}
+
+function flipCard() {
+  flipped = !flipped;
+  card.classList.toggle('flipped', flipped);
+  if (flipped) setTimeout(speakCurrent, 300);
+  else synth.cancel();
+}
+
+function next() {
+  if (current < order.length - 1) {
+    current++;
+    render();
+  }
+}
+
+function prev() {
+  if (current > 0) {
+    current--;
+    render();
+  }
+}
+
+function shuffle() {
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  current = 0;
+  render();
+}
+
+function reset() {
+  order = raw.map((_, i) => i);
+  current = 0;
+  render();
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next();
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prev();
+  else if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flipCard(); }
+});
+
+render();
+</script>
+</body>
+</html>
