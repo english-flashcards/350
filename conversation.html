@@ -1,0 +1,371 @@
+Bash
+$ cat /home/user/350/conversation.html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>会話フラッシュカード</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+    background: #1a1a2e;
+    color: #eee;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 20px;
+  }
+
+  h1 { font-size: 1.2rem; color: #a0aec0; letter-spacing: 0.05em; }
+
+  .progress-bar-wrap {
+    width: 100%; max-width: 540px;
+    background: #2d3748; border-radius: 99px; height: 6px;
+  }
+  .progress-bar {
+    height: 6px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    border-radius: 99px; transition: width 0.3s ease;
+  }
+
+  .counter { font-size: 0.9rem; color: #718096; }
+
+  .scene {
+    width: 100%; max-width: 540px;
+    height: 370px;
+    perspective: 1000px; cursor: pointer;
+  }
+
+  .card {
+    width: 100%; height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 20px;
+  }
+  .card.flipped { transform: rotateY(180deg); }
+
+  .face {
+    position: absolute; inset: 0;
+    border-radius: 20px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 24px 30px;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    gap: 10px;
+  }
+
+  .face-front {
+    background: linear-gradient(135deg, #232946 0%, #16213e 100%);
+    border: 1px solid #3d4a6b;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  }
+
+  .face-back {
+    background: linear-gradient(135deg, #0f3460 0%, #162447 100%);
+    border: 1px solid #2a4a7f;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    transform: rotateY(180deg);
+  }
+
+  .face-label {
+    font-size: 0.68rem; letter-spacing: 0.15em;
+    text-transform: uppercase; opacity: 0.4;
+  }
+
+  .speaker-tag {
+    font-size: 0.78rem; color: #a78bfa;
+    font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .face-text {
+    font-size: 1.4rem; font-weight: 600;
+    text-align: center; line-height: 1.6; color: #f0f4ff;
+  }
+
+  .tap-hint { font-size: 0.72rem; opacity: 0.28; margin-top: 2px; }
+
+  .card-num {
+    font-size: 0.78rem; color: #553c9a; font-weight: 700;
+    position: absolute; top: 14px; left: 18px;
+  }
+
+  /* ── リアルふりがな レイアウト ── */
+  .en-wrap {
+    display: flex; flex-wrap: wrap;
+    align-items: flex-end; justify-content: center;
+    gap: 5px 5px; width: 100%;
+  }
+
+  .en-seg {
+    display: inline-flex; flex-direction: column;
+    align-items: center; gap: 3px;
+  }
+
+  .en-ruby {
+    font-size: 0.6rem; color: #fbbf24;
+    font-family: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+    font-style: normal; font-weight: 600;
+    line-height: 1; white-space: nowrap; letter-spacing: 0.02em;
+  }
+
+  .en-text {
+    font-size: 0.97rem; color: #93c5fd;
+    font-style: italic; font-family: 'Georgia', serif;
+    line-height: 1; white-space: nowrap;
+  }
+
+  .en-slash {
+    color: #a78bfa; font-size: 1.1rem; font-weight: 700;
+    align-self: flex-end; padding-bottom: 1px; line-height: 1;
+    font-style: normal; font-family: sans-serif;
+  }
+
+  /* ── 読み上げボタン ── */
+  .btn-speak {
+    background: none;
+    border: 1.5px solid rgba(147,197,253,0.35);
+    border-radius: 50%; width: 34px; height: 34px;
+    min-width: unset; padding: 0; font-size: 0.95rem;
+    color: #93c5fd; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, transform 0.1s; margin-top: 4px;
+  }
+  .btn-speak:hover { background: rgba(147,197,253,0.12); transform: scale(1.1); }
+  .btn-speak.speaking { background: rgba(147,197,253,0.2); animation: pulse 0.8s infinite; }
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.15)} }
+
+  /* ── コントロール ── */
+  .controls {
+    display: flex; gap: 12px;
+    align-items: center; flex-wrap: wrap; justify-content: center;
+  }
+
+  button {
+    padding: 11px 22px; border: none; border-radius: 12px;
+    font-size: 0.93rem; font-weight: 600; cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .btn-prev, .btn-next {
+    background: #2d3748; color: #e2e8f0; min-width: 95px;
+  }
+  .btn-prev:hover, .btn-next:hover { background: #4a5568; transform: translateY(-1px); }
+  .btn-prev:disabled, .btn-next:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+
+  .btn-shuffle { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+  .btn-shuffle:hover { opacity: 0.88; transform: translateY(-1px); }
+
+  .btn-reset { background: #2d3748; color: #a0aec0; font-size: 0.83rem; }
+  .btn-reset:hover { background: #4a5568; }
+
+  @media (max-width: 560px) {
+    .scene { height: 350px; }
+    .face-text { font-size: 1.15rem; }
+    .en-text { font-size: 0.82rem; }
+    .en-ruby { font-size: 0.52rem; }
+  }
+</style>
+</head>
+<body>
+
+<h1>会話フラッシュカード</h1>
+
+<div class="progress-bar-wrap">
+  <div class="progress-bar" id="progressBar"></div>
+</div>
+<div class="counter" id="counter">1 / 4</div>
+
+<div class="scene" onclick="flipCard()">
+  <div class="card" id="card">
+    <div class="face face-front">
+      <div class="card-num" id="cardNum">#1</div>
+      <div class="face-label">日本語</div>
+      <div class="speaker-tag" id="frontSpeaker"></div>
+      <div class="face-text" id="frontText"></div>
+      <div class="tap-hint">タップして英文を見る</div>
+    </div>
+    <div class="face face-back">
+      <div class="face-label">English + 読み方</div>
+      <div class="speaker-tag" id="backSpeaker"></div>
+      <div class="en-wrap" id="backWrap"></div>
+      <button class="btn-speak" id="btnSpeak" onclick="event.stopPropagation(); speakCurrent()">🔊</button>
+    </div>
+  </div>
+</div>
+
+<div class="controls">
+  <button class="btn-prev" id="btnPrev" onclick="prev()">← 前へ</button>
+  <button class="btn-next" id="btnNext" onclick="next()">次へ →</button>
+</div>
+<div class="controls">
+  <button class="btn-shuffle" onclick="shuffle()">シャッフル</button>
+  <button class="btn-reset" onclick="reset()">順番に戻す</button>
+</div>
+
+<script>
+// segments: { text, ruby } = フレーズ, null = / 区切り
+const cards = [
+  {
+    speaker: "Steven",
+    japanese: "やあアナ、今週末は何をするつもりなの？",
+    englishPlain: "Hi Anna, what are you going to do this weekend?",
+    segments: [
+      { text: "Hi Anna,", ruby: "はい あな" },
+      null,
+      { text: "what / are you going to do", ruby: "わるゆ がな どぅ" },
+      null,
+      { text: "this weekend?", ruby: "でぃすうぃけん" }
+    ]
+  },
+  {
+    speaker: "Anna",
+    japanese: "やあスティーブン！娘と彼女の家族に会いに行くつもりよ。あなたはどうするの？",
+    englishPlain: "Hi Steven! I'm going to visit my daughter and her family. How about you?",
+    segments: [
+      { text: "Hi Steven!", ruby: "ハイ スティーブン" },
+      null,
+      { text: "I'm going to visit", ruby: "あ(い)むがなヴィじっ" },
+      null,
+      { text: "my daughter", ruby: "まい だーらr" },
+      null,
+      { text: "and her family.", ruby: "えn はr ふぇmり" },
+      null,
+      { text: "How about you?", ruby: "はうばうゆぅ？" }
+    ]
+  },
+  {
+    speaker: "Steven",
+    japanese: "新しい趣味を始めたいんだ。ガーデニングを考えてるんだけど。エミリー、何かアドバイスはある？",
+    englishPlain: "I want to start a new hobby. I'm thinking about gardening. Emily, do you have any suggestions?",
+    segments: [
+      { text: "I want to start", ruby: "あわな すたあ" },
+      null,
+      { text: "a new hobby. I'm thinking", ruby: "た にゅはびー あ(い)むthぃんきん" },
+      null,
+      { text: "about gardening. Emily,", ruby: "なばうt がーでにんg" },
+      null,
+      { text: "do you have", ruby: "どぅやヴ" },
+      null,
+      { text: "any suggestions?", ruby: "えに すじぇsちぇんs？" }
+    ]
+  },
+  {
+    speaker: "Emily",
+    japanese: "ガーデニングはすごくいいアイデアね、スティーブン。今週の土曜日にうちに来て。私の庭を見せてあげるわ。",
+    englishPlain: "Gardening is a great idea, Steven. I want you to come over to my place this Saturday. I'll show you my garden.",
+    segments: [
+      { text: "Gardening is a great idea, Steven.", ruby: "がーでにんg いざ ぐれいたいでぃあ" },
+      null,
+      { text: "I want you", ruby: "あ(い)うぉんちゅ" },
+      null,
+      { text: "to come over", ruby: "とぅ かもうヴァr" },
+      null,
+      { text: "to my place", ruby: "とぅまいぷれいす" },
+      null,
+      { text: "this Saturday.", ruby: "ディsさらでい" },
+      null,
+      { text: "I'll show you", ruby: "あ(い)うしょうゆぅ" },
+      null,
+      { text: "my garden.", ruby: "まいがーでn" }
+    ]
+  }
+];
+
+let order = cards.map((_, i) => i);
+let current = 0;
+let flipped = false;
+
+const card     = document.getElementById('card');
+const frontText    = document.getElementById('frontText');
+const frontSpeaker = document.getElementById('frontSpeaker');
+const backWrap     = document.getElementById('backWrap');
+const backSpeaker  = document.getElementById('backSpeaker');
+const cardNum      = document.getElementById('cardNum');
+const counter      = document.getElementById('counter');
+const progressBar  = document.getElementById('progressBar');
+const btnPrev      = document.getElementById('btnPrev');
+const btnNext      = document.getElementById('btnNext');
+const btnSpeak     = document.getElementById('btnSpeak');
+
+function buildBackHTML(segs) {
+  return segs.map(s => {
+    if (s === null) return '<span class="en-slash">/</span>';
+    return `<span class="en-seg"><span class="en-ruby">${s.ruby}</span><span class="en-text">${s.text}</span></span>`;
+  }).join('');
+}
+
+function render() {
+  const idx = order[current];
+  const c = cards[idx];
+  frontSpeaker.textContent = c.speaker;
+  frontText.textContent    = c.japanese;
+  backSpeaker.textContent  = c.speaker;
+  backWrap.innerHTML       = buildBackHTML(c.segments);
+  cardNum.textContent      = '#' + (idx + 1);
+  counter.textContent      = (current + 1) + ' / ' + order.length;
+  progressBar.style.width  = ((current + 1) / order.length * 100) + '%';
+  btnPrev.disabled = current === 0;
+  btnNext.disabled = current === order.length - 1;
+  if (flipped) { card.classList.remove('flipped'); flipped = false; }
+}
+
+const synth = window.speechSynthesis;
+let voices = [];
+function loadVoices() { voices = synth.getVoices(); }
+loadVoices();
+if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = loadVoices;
+
+function speakCurrent() {
+  if (!synth) return;
+  synth.cancel();
+  const idx = order[current];
+  const utter = new SpeechSynthesisUtterance(cards[idx].englishPlain);
+  utter.lang = 'en-US';
+  utter.rate = 0.9;
+  const enVoice = voices.find(v => v.lang.startsWith('en') && !v.name.includes('Google') || v.lang === 'en-US');
+  if (enVoice) utter.voice = enVoice;
+  btnSpeak.classList.add('speaking');
+  utter.onend  = () => btnSpeak.classList.remove('speaking');
+  utter.onerror = () => btnSpeak.classList.remove('speaking');
+  synth.speak(utter);
+}
+
+function flipCard() {
+  flipped = !flipped;
+  card.classList.toggle('flipped', flipped);
+  if (flipped) setTimeout(speakCurrent, 300);
+  else synth.cancel();
+}
+
+function next() { if (current < order.length - 1) { current++; render(); } }
+function prev() { if (current > 0) { current--; render(); } }
+
+function shuffle() {
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  current = 0; render();
+}
+
+function reset() { order = cards.map((_, i) => i); current = 0; render(); }
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next();
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prev();
+  else if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flipCard(); }
+});
+
+render();
+</script>
+</body>
+</html>
